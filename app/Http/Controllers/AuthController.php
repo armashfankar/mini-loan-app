@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Auth;
 use Validator;
 use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -58,4 +59,20 @@ class AuthController extends Controller
             'message' => 'You have successfully logged out and the token was successfully deleted'
         ];
     }
+
+    public function adminLogin(Request $request)
+    {
+
+        if (!Auth::guard('admin')->attempt($request->only('email', 'password')))
+        {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        
+        $admin = Admin::where('email', $request['email'])->firstOrFail();
+        
+        $token = $admin->createToken('auth_token')->plainTextToken;
+
+        return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
+
+    }    
 }
