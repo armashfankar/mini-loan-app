@@ -34,6 +34,10 @@ trait ResponseCodeTrait
             '107' => ['request_id' => '', 'success' => false, 'response_code' => 107, 'message' => 'Token Expired', 'http_code' => 400],
             '108' => ['request_id' => '', 'success' => false, 'response_code' => 108, 'message' => 'Not Found', 'http_code' => 404],
             '109' => ['request_id' => '', 'success' => false, 'response_code' => 109, 'message' => 'Device type or version is missing in header', 'http_code' => 400],
+            '110' => ['request_id' => '', 'success' => false, 'response_code' => 110, 'message' => 'Repayment Amount Must Be Greater Than or Equal To Scheduled Amount (EMI).', 'http_code' => 400],
+            '111' => ['request_id' => '', 'success' => true, 'response_code' => 0, 'message' => 'Loan Already Paid', 'http_code' => 200],
+            '112' => ['request_id' => '', 'success' => false, 'response_code' => 112, 'message' => 'Repayment Amount Cannot Be Greater Than Loan Amount', 'http_code' => 400],
+            '113' => ['request_id' => '', 'success' => false, 'response_code' => 113, 'message' => 'Loan Not Approved!', 'http_code' => 400],
 
             /*
             |--------------------------------------------------------------------------

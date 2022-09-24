@@ -15,6 +15,7 @@ class CreateLoanSchedulePaymentsTable extends Migration
     {
         Schema::create('loan_schedule_payments', function (Blueprint $table) {
             $table->id();
+            $table->string('repayment_reference_number', 20);
             $table->string('loan_reference_number', 20);
             $table->decimal('scheduled_amount', 9, 3);
             $table->date('scheduled_date');
@@ -23,6 +24,7 @@ class CreateLoanSchedulePaymentsTable extends Migration
             $table->date('paid_on')->nullable();
             $table->foreign('loan_reference_number')->references('loan_reference_number')->on('user_loans')->onDelete('cascade');
             $table->timestamps();
+            $table->index('repayment_reference_number');
             $table->index('loan_reference_number');
         });
     }

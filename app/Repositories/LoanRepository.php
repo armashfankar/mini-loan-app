@@ -11,6 +11,11 @@ class LoanRepository
 {
     protected $model;
 
+    /**
+     * LoanRepository constructor.
+     * @param UserLoan $model
+     * 
+     */
     public function __construct(UserLoan $model)
     {
         $this->model = $model;

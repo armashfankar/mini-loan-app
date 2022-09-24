@@ -6,10 +6,11 @@ use App\Exceptions\ValidationFailedException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LoanResource;
 use App\Repositories\LoanRepository;
+use App\Repositories\RepaymentRepository;
 use App\Traits\ResponseCodeTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Carbon\Carbon;
 
 class LoanController extends Controller
 {
@@ -20,11 +21,13 @@ class LoanController extends Controller
     /**
      * LoanController constructor.
      * @param LoanRepository $loan_repository
+     * @param RepaymentRepository $repayment_repository
      * 
      */
-    public function __construct(LoanRepository $loan_repository)
+    public function __construct(LoanRepository $loan_repository, RepaymentRepository $repayment_repository)
     {
         $this->loan_repository = $loan_repository;
+        $this->repayment_repository = $repayment_repository;
         
     }
 
@@ -80,13 +83,14 @@ class LoanController extends Controller
             'amount' => $request_data['amount'],
             'term' => $request_data['term'],            
             'loan_status' => 'pending',
-            'pending_amount' => $request_data['amount']
+            'pending_amount' => $request_data['amount'],
+            'next_payment_date' => Carbon::today()->addDays(7)
         ];
         
         $loan = $this->loan_repository->create($loan_params);
-
         $response = $this->getResponseCode(1);
         if (!empty($loan)) {
+            $this->repayment_repository->create($loan);
             $response['data']['loan'] = new LoanResource($loan);
         } else {
             $response = $this->getResponseCode(102);
@@ -106,37 +110,68 @@ class LoanController extends Controller
     public function update(Request $request, $loan_reference_number)
     {
         $request_data = $request->all();
-        
+        $loan_status = 'pending';
+
         $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
-        if(empty($loan)){
-            
+
+        if(empty($loan)){            
             $response = $this->getResponseCode(108);
             if (!empty($message)) {
                 $response['message'] = $message;
             }
-
+            return response($response);
+        }elseif($loan->is_approved != 1){
+            $response = $this->getResponseCode(113);
+            if (!empty($message)) {
+                $response['message'] = $message;
+            }
+            return response($response);
+        }elseif($loan->loan_status == 'paid'){
+            $response = $this->getResponseCode(111);
+            if (!empty($message)) {
+                $response['message'] = $message;
+            }
+            return response($response);
+        }elseif($request_data['amount'] > $loan->amount || $request_data['amount'] > $loan->pending_amount){
+            $response = $this->getResponseCode(112);
+            if (!empty($message)) {
+                $response['message'] = $message;
+            }
             return response($response);
         }
+
+        //repayment logic
+        $repay = $this->repayment_repository->update($loan, $request_data);
+        if($repay === 0){
+            $response = $this->getResponseCode(110);
+            if (!empty($message)) {
+                $response['message'] = $message;
+            }
+            return response($response);
+        }elseif($repay === 1){
+            $loan_status = 'paid';
+            $next_payment_date = Null;
+        }else{
+            $next_payment_date = $repay;
+        }
         
-        $update_params = [];
-        if ($request->has('loan_status')) {
-            $update_params['loan_status'] = $request_data['loan_status'];
+        if($loan->pending_amount - $request_data['amount'] <= 0){
+            $loan_status = 'paid';
         }
-        if ($request->has('pending_amount')) {
-            $update_params['pending_amount'] = $request_data['pending_amount'];
-        }
-        if ($request->has('last_payment_date')) {
-            $update_params['last_payment_date'] = $request_data['last_payment_date'];
-        }
-        if ($request->has('next_payment_date')) {
-            $update_params['next_payment_date'] = $request_data['next_payment_date'];
-        }
+
+        $update_params = [
+            'pending_amount' => $loan->pending_amount - $request_data['amount'],
+            'last_payment_date' => Carbon::today(),
+            'next_payment_date' => $next_payment_date,
+            'loan_status' => $loan_status
+        ];
         
         $update = $this->loan_repository->update($loan_reference_number,$update_params);
         
         $response = $this->getResponseCode(1);
         if (!empty($update)) {
-            $response['data']['loan'] = new LoanResource($update);
+            $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
+            $response['data']['loan'] = new LoanResource($loan);
         } else {
             $response = $this->getResponseCode(104);
         }
