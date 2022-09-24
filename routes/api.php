@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LoanController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,10 +28,14 @@ Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
 //Protecting Routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
+    
     Route::get('/profile', function(Request $request) {
         return auth()->user();
     });
 
     // API route for logout user
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::resource('/loan', LoanController::class);
+
 });

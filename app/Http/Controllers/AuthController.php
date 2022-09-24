@@ -8,7 +8,8 @@ use Auth;
 use Validator;
 use App\Models\User;
 use App\Models\Admin;
-use Illuminate\Support\Str;
+use App\Helpers\UtilHelper as Util;
+
 
 class AuthController extends Controller
 {
@@ -25,7 +26,7 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'user_reference_number' => Str::random(20),
+            'user_reference_number' => $this->generateReferenceNumber(),
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password)
@@ -74,5 +75,13 @@ class AuthController extends Controller
 
         return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
 
-    }    
+    } 
+    
+    /**
+     * @return string
+     */
+    private function generateReferenceNumber()
+    {
+        return 'USR' . Util::generateString(true);
+    }
 }
