@@ -17,6 +17,7 @@ class Admin extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'admin_reference_number',
         'name',
         'email',
         'password',
