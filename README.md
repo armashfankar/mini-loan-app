@@ -68,10 +68,8 @@ Here's a basic setup:
     php artisan serve
     ```
 
-### Rest APIs
-
-    Postman Collection Import: https://www.getpostman.com/collections/aea9b31d4c201288b5d9
-
+### Rest APIs (Postman: https://www.getpostman.com/collections/aea9b31d4c201288b5d9)
+    
     ```shell script
     User Register:
     [POST] http://localhost:8000/api/register
