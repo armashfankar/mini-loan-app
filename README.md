@@ -70,7 +70,6 @@ Here's a basic setup:
 
 ### Rest APIs (Postman Import: https://www.getpostman.com/collections/aea9b31d4c201288b5d9)
     
-    ```shell script
     User Register:
     [POST] http://localhost:8000/api/register
     
@@ -97,4 +96,4 @@ Here's a basic setup:
 
     My Loans:
     [GET] http://localhost:8000/api/loan
-    ```
+    
