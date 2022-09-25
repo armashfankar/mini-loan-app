@@ -70,9 +70,7 @@ Here's a basic setup:
 
 ### Rest APIs
 
-    ```shell script
     Postman Collection Import: https://www.getpostman.com/collections/aea9b31d4c201288b5d9
-    ```
 
     ```shell script
     User Register:
