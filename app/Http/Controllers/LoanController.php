@@ -11,6 +11,7 @@ use App\Traits\ResponseCodeTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Helpers\UtilHelper as Util;
 
 class LoanController extends Controller
 {
@@ -42,12 +43,6 @@ class LoanController extends Controller
     {
         $request_data = $request->all();
     
-        $rules = [
-            'loan_reference_number' => 'required'
-        ];
-
-        $this->validate($request, $rules);
-        
         $loans = $this->loan_repository->all($request_data);
         
         $response = $this->getResponseCode(1);
@@ -110,55 +105,60 @@ class LoanController extends Controller
     public function update(Request $request, $loan_reference_number)
     {
         $request_data = $request->all();
-        $loan_status = 'pending';
+        
+        // check if auth user is admin then approve loan
+        $is_admin = Util::checkIfAdmin();
+        
+        if($is_admin === 1){
+            $approval = $this->loanApproval($loan_reference_number);
+            
+            $response = $this->getResponseCode(1);
+            if ($approval === 1) {
+                //fetch updated loan data
+                $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
+                $response['data']['loan'] = new LoanResource($loan);
+            } else {
+                $response = $this->getResponseCode(104);
+            }
 
+            return response($response);
+        }
+
+        // fetch loan details
         $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
 
-        if(empty($loan)){            
-            $response = $this->getResponseCode(108);
-            if (!empty($message)) {
-                $response['message'] = $message;
-            }
-            return response($response);
-        }elseif($loan->is_approved != 1){
-            $response = $this->getResponseCode(113);
-            if (!empty($message)) {
-                $response['message'] = $message;
-            }
-            return response($response);
-        }elseif($loan->loan_status == 'paid'){
-            $response = $this->getResponseCode(111);
-            if (!empty($message)) {
-                $response['message'] = $message;
-            }
-            return response($response);
-        }elseif($request_data['amount'] > $loan->amount || $request_data['amount'] > $loan->pending_amount){
-            $response = $this->getResponseCode(112);
+        // Different Conditional Checks befor Loan Update
+        $verify_loan = $this->verifyLoanConditions($loan, $loan_reference_number);
+
+        if($verify_loan !== 1){
+            $response = $this->getResponseCode($verify_loan);
             if (!empty($message)) {
                 $response['message'] = $message;
             }
             return response($response);
         }
 
-        //repayment logic
-        $repay = $this->repayment_repository->update($loan, $request_data);
-        if($repay === 0){
+        // Repayment Logic (in repayment repository)
+        $repayment_update = $this->repayment_repository->update($loan, $request_data);
+        $loan_status = 'pending';
+
+        if($repayment_update === 0){
+            // if repayment amount is less than scheduled amount
             $response = $this->getResponseCode(110);
             if (!empty($message)) {
                 $response['message'] = $message;
             }
             return response($response);
-        }elseif($repay === 1){
+        }
+        elseif($repayment_update === 1){
+            // if all scheduled repayments are completed and loan is fully paid
             $loan_status = 'paid';
             $next_payment_date = Null;
         }else{
-            $next_payment_date = $repay;
+            // if payment of a scheduled repayment is completed, gets next scheduled date
+            $next_payment_date = $repayment_update;
         }
-        
-        if($loan->pending_amount - $request_data['amount'] <= 0){
-            $loan_status = 'paid';
-        }
-
+            
         $update_params = [
             'pending_amount' => $loan->pending_amount - $request_data['amount'],
             'last_payment_date' => Carbon::today(),
@@ -166,10 +166,12 @@ class LoanController extends Controller
             'loan_status' => $loan_status
         ];
         
-        $update = $this->loan_repository->update($loan_reference_number,$update_params);
+        //update loan fields
+        $update = $this->loan_repository->update($loan_reference_number, $update_params);
         
         $response = $this->getResponseCode(1);
         if (!empty($update)) {
+            //fetch update loan data
             $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
             $response['data']['loan'] = new LoanResource($loan);
         } else {
@@ -188,7 +190,18 @@ class LoanController extends Controller
     public function destroy($loan_reference_number)
     {
         $message = '';
+        
+        // check if admin
+        $is_admin = Util::checkIfAdmin();
 
+        if($is_admin === 0){
+            $response = $this->getResponseCode(114);
+            if (!empty($message)) {
+                $response['message'] = $message;
+            }
+            return response($response);
+        }
+        
         $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
         if(empty($loan)){   
             $response = $this->getResponseCode(108);
@@ -210,5 +223,43 @@ class LoanController extends Controller
         }
 
         return response($response);
+    }
+
+    public function verifyLoanConditions($loan, $loan_reference_number)
+    {  
+        if(empty($loan)){            
+            //if loan not found
+            return 108;
+        }elseif($loan->loan_status == 'paid'){
+            // if loan is already paid
+            return 2;
+        }elseif($loan->is_approved != 1){
+            // if loan is not approved by admin user cannot repay
+            return 112;
+        }elseif($request_data['amount'] > $loan->amount || $request_data['amount'] > $loan->pending_amount){
+            // if repay amount is greater than loan amount OR pending payment amount 
+            return 111;
+        }elseif(!($request_data['amount'] >= $loan->pending_amount)){
+            // repay amount should not be greater than pending amount
+            return 113;
+        }else{
+            return 1;
+        }
+    }
+
+    public function loanApproval($loan_reference_number)
+    {
+        $update_params = [
+            'loan_status' => 'approved'
+        ];
+        
+        // update loan status to approved
+        $update = $this->loan_repository->update($loan_reference_number, $update_params);
+        
+        if (!empty($update)) {
+            return 1;
+        } else {
+            return 104;
+        }
     }
 }

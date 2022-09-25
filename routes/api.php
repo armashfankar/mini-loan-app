@@ -17,25 +17,21 @@ use App\Http\Controllers\LoanController;
 |
 */
 
-//API route for register new user
+// API route for User & Admin authentication
 Route::post('/register', [AuthController::class, 'register']);
-
-//API route for login user
 Route::post('/login', [AuthController::class, 'login']);
-
-//API route for login admin
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
-//Protecting Routes
+// Auth Protected Routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    
+    // User & Admin profile
     Route::get('/profile', function(Request $request) {
         return auth()->user();
     });
 
-    // API route for logout user
+    // API route for logout User & Admin
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // API route for loan related requests
     Route::resource('/loan', LoanController::class);
-
 });
