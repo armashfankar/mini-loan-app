@@ -19,6 +19,7 @@ trait ResponseCodeTrait
             */
             '1' => ['request_id' => '', 'success' => true, 'response_code' => 0, 'message' => 'Success', 'http_code' => 200],
             '2' => ['request_id' => '', 'success' => true, 'response_code' => 0, 'message' => 'Loan Already Paid', 'http_code' => 200],
+            '3' => ['request_id' => '', 'success' => true, 'response_code' => 0, 'message' => 'Loan Approved', 'http_code' => 200],
 
             /*
             |--------------------------------------------------------------------------
@@ -35,10 +36,10 @@ trait ResponseCodeTrait
             '108' => ['request_id' => '', 'success' => false, 'response_code' => 108, 'message' => 'Not Found', 'http_code' => 404],
             '109' => ['request_id' => '', 'success' => false, 'response_code' => 109, 'message' => 'Device type or version is missing in header', 'http_code' => 400],
             '110' => ['request_id' => '', 'success' => false, 'response_code' => 110, 'message' => 'Repayment Amount Must Be Greater Than or Equal To Scheduled Amount (EMI).', 'http_code' => 400],
-            '111' => ['request_id' => '', 'success' => false, 'response_code' => 112, 'message' => 'Repayment Amount Cannot Be Greater Than Loan Amount', 'http_code' => 400],
-            '112' => ['request_id' => '', 'success' => false, 'response_code' => 113, 'message' => 'Loan Not Approved!', 'http_code' => 400],
-            '113' => ['request_id' => '', 'success' => false, 'response_code' => 114, 'message' => 'Admin Access Required!', 'http_code' => 400],
-
+            '111' => ['request_id' => '', 'success' => false, 'response_code' => 111, 'message' => 'Repayment Amount Cannot Be Greater Than Loan Amount', 'http_code' => 400],
+            '112' => ['request_id' => '', 'success' => false, 'response_code' => 112, 'message' => 'Loan Not Approved!', 'http_code' => 400],
+            '113' => ['request_id' => '', 'success' => false, 'response_code' => 113, 'message' => 'Admin Access Required!', 'http_code' => 400],
+            '114' => ['request_id' => '', 'success' => false, 'response_code' => 114, 'message' => 'Invalid User!', 'http_code' => 400],
             /*
             |--------------------------------------------------------------------------
             | SERVICE SPECIFIC RESPONSE CODE

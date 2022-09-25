@@ -114,9 +114,7 @@ class LoanController extends Controller
             
             $response = $this->getResponseCode(1);
             if ($approval === 1) {
-                //fetch updated loan data
-                $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
-                $response['data']['loan'] = new LoanResource($loan);
+                $response = $this->getResponseCode(3);
             } else {
                 $response = $this->getResponseCode(104);
             }
@@ -128,7 +126,7 @@ class LoanController extends Controller
         $loan = $this->loan_repository->findByReferenceNumber($loan_reference_number);
 
         // Different Conditional Checks befor Loan Update
-        $verify_loan = $this->verifyLoanConditions($loan, $loan_reference_number);
+        $verify_loan = $this->verifyLoanConditions($request_data, $loan, $loan_reference_number);
 
         if($verify_loan !== 1){
             $response = $this->getResponseCode($verify_loan);
@@ -195,7 +193,7 @@ class LoanController extends Controller
         $is_admin = Util::checkIfAdmin();
 
         if($is_admin === 0){
-            $response = $this->getResponseCode(114);
+            $response = $this->getResponseCode(113);
             if (!empty($message)) {
                 $response['message'] = $message;
             }
@@ -225,7 +223,7 @@ class LoanController extends Controller
         return response($response);
     }
 
-    public function verifyLoanConditions($loan, $loan_reference_number)
+    public function verifyLoanConditions($request_data, $loan, $loan_reference_number)
     {  
         if(empty($loan)){            
             //if loan not found
@@ -233,15 +231,14 @@ class LoanController extends Controller
         }elseif($loan->loan_status == 'paid'){
             // if loan is already paid
             return 2;
-        }elseif($loan->is_approved != 1){
+        }elseif($loan->loan_status != 'approved'){
             // if loan is not approved by admin user cannot repay
             return 112;
+        }elseif(auth()->user()->user_reference_number != $loan->user_reference_number){
+            return 114;
         }elseif($request_data['amount'] > $loan->amount || $request_data['amount'] > $loan->pending_amount){
             // if repay amount is greater than loan amount OR pending payment amount 
             return 111;
-        }elseif(!($request_data['amount'] >= $loan->pending_amount)){
-            // repay amount should not be greater than pending amount
-            return 113;
         }else{
             return 1;
         }
