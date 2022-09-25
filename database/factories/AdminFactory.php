@@ -25,8 +25,8 @@ class AdminFactory extends Factory
     {
         return [
             'admin_reference_number' => $this->generateReferenceNumber(),
-            'name' => "Thanh Nghiem",
-            'email' => "admin@aspireapp.com",
+            'name' => "Jhon Doe",
+            'email' => "admin@miniloan.com",
             'password' => '$2y$10$KeHthg2WhwIgJWGtBdhtq.xF6L9Y0PaVh.kXfuJIw5xxW02aTawKS', // asdasdasd
         ];
     }
